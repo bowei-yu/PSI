@@ -77,8 +77,7 @@ uint32_t naivepsi(role_type role, uint32_t neles, uint32_t pneles, task_ctx ectx
 
 	run_task(ntasks, ectx, psi_hashing_function);
 
-	ofstream filestream("output/hashing.out");
-	filestream << ectx.eles.output;
+	ofstream filestream("output/naive-psi.out");
 
 	phashes = (uint8_t*) malloc(sizeof(uint8_t) * pneles * maskbytelen);
 
@@ -88,21 +87,24 @@ uint32_t naivepsi(role_type role, uint32_t neles, uint32_t pneles, task_ctx ectx
 #endif
 	snd_and_rcv(hashes, neles * maskbytelen, phashes, pneles * maskbytelen, tmpsock);
 
-	/*cout << "Hashes of my elements: " << endl;
+	// cout << "Hashes of my elements: " << endl;
 	for(i = 0; i < neles; i++) {
 		for(uint32_t j = 0; j < maskbytelen; j++) {
-			cout << (hex) << (uint32_t) hashes[i * maskbytelen + j] << (dec);
+			filestream << (hex) << (uint32_t) hashes[i * maskbytelen + j] << (dec);
 		}
-		cout << endl;
+		filestream << endl;
 	}
 
-	cout << "Hashes of partner elements: " << endl;
+	filestream << "SEPARATION";
+
+	// cout << "Hashes of partner elements: " << endl;
 	for(i = 0; i < pneles; i++) {
 		for(uint32_t j = 0; j < maskbytelen; j++) {
-			cout << (hex) << (uint32_t) phashes[i * maskbytelen + j] << (dec);
+			filestream << (hex) << (uint32_t) phashes[i * maskbytelen + j] << (dec);
 		}
-		cout << endl;
-	}*/
+		filestream << endl;
+	}
+
 #ifdef DEBUG
 	cout << "Finding intersection" << endl;
 #endif

@@ -14,22 +14,23 @@ class GUI(Tk):
 
         self.expected_displayed = False
         self.results_displayed = False
+        self.hashing_displayed = False
 
         self.display_method_options()
         self.display_initial_lists()
         self.display_submit_button()
 
     def display_method_options(self):
-        frame1 = Frame(self)
-        frame1.pack()
+        frame = Frame(self)
+        frame.pack()
 
-        method_label = Label(frame1, text="Please select the PSI method: ")
+        method_label = Label(frame, text="Please select the PSI method: ")
         method_label.pack(side=LEFT, padx=10, pady=10)
         
         self.method = StringVar(self)
         self.method.set(METHODS[3]) # default value
 
-        method_options = OptionMenu(frame1, self.method, METHODS[0], METHODS[1], METHODS[2], METHODS[3])
+        method_options = OptionMenu(frame, self.method, METHODS[0], METHODS[1], METHODS[2], METHODS[3])
         method_options.pack(padx=10, pady=10)
 
     def display_initial_lists(self):
@@ -44,16 +45,16 @@ class GUI(Tk):
         self.listA = get_lines("sample_sets/emails_alice.txt")
         self.listB = get_lines("sample_sets/emails_bob.txt")
 
-        frame2 = Frame(self)
-        frame2.pack()
+        frame = Frame(self)
+        frame.pack()
 
-        labelA = Label(frame2, text="Alice's dataset")
-        self.textboxA = Text(frame2)
+        labelA = Label(frame, text="Alice's dataset")
+        self.textboxA = Text(frame)
         labelA.pack(side=LEFT, padx=10, pady=10)
         self.textboxA.pack(side=LEFT)
 
-        labelB = Label(frame2, text="Bob's dataset")
-        self.textboxB = Text(frame2)
+        labelB = Label(frame, text="Bob's dataset")
+        self.textboxB = Text(frame)
         labelB.pack(side=RIGHT, padx=10, pady=10)
         self.textboxB.pack(side=RIGHT)
 
@@ -106,14 +107,14 @@ class GUI(Tk):
             self.calculated_intersection.configure(textvariable=calculated_intersection)
 
         else :
-            frame3 = Frame(self)
-            frame3.pack(side=LEFT)
+            frame = Frame(self)
+            frame.pack(side=LEFT)
 
             num_intersections = len(intersections)
-            self.calculated_intersection = Label(frame3, textvariable=calculated_intersection)
+            self.calculated_intersection = Label(frame, textvariable=calculated_intersection)
             self.calculated_intersection.pack()
 
-            self.listBoxI = Listbox(frame3)
+            self.listBoxI = Listbox(frame)
             self.listBoxI.config(width=0)
             self.listBoxI.pack(expand=True)
         
@@ -143,28 +144,79 @@ class GUI(Tk):
             self.actual_intersection.configure(textvariable=actual_intersection)
     
         else :
-            frame4 = Frame(self)
-            frame4.pack(side=LEFT)
+            frame = Frame(self)
+            frame.pack(side=LEFT)
 
             num_intersections = len(intersections)
-            self.actual_intersection = Label(frame4, textvariable=actual_intersection)
+            self.actual_intersection = Label(frame, textvariable=actual_intersection)
             self.actual_intersection.pack()
 
-            self.listBoxA = Listbox(frame4)
+            self.listBoxA = Listbox(frame)
             self.listBoxA.config(width=0)
             self.listBoxA.pack(expand=True)
         
         for item in intersections:
-            if item == "":
-                continue
             self.listBoxA.insert(END, item)
 
         self.results_displayed = True
 
+    
+    def get_hashes(self):
+        ABlines = []
+        with open("output/naive-psi.out") as f:
+            all_lines = f.read().split("SEPARATION")
+            print(len(all_lines))
+            for sep_lines in all_lines:
+                lines = sep_lines.split("\n")
+                non_empty_lines = [line for line in lines if line.strip() != ""]
+                ABlines.append(non_empty_lines)
+        return ABlines
+
+    def display_naive_psi(self):
+        ABlines = self.get_hashes()
+        hashesA = ABlines[0]
+        hashesB = ABlines[1]
+
+        if self.hashing_displayed:
+            self.listBoxAH.delete(0, END)
+            self.listBoxBH.delete(0, END)
+        
+        else :
+            frameA = Frame(self)
+            frameA.pack(side=LEFT)
+
+            frameB = Frame(self)
+            frameB.pack(side=LEFT)
+
+            self.hashesA = Label(frameA, text="Alice's hashes")
+            self.hashesA.pack()
+
+            self.listBoxAH = Listbox(frameA)
+            self.listBoxAH.config(width=0)
+            self.listBoxAH.pack(expand=True)
+
+            self.hashesB = Label(frameB, text="Bob's hashes")
+            self.hashesB.pack()
+
+            self.listBoxBH = Listbox(frameB)
+            self.listBoxBH.config(width=0)
+            self.listBoxBH.pack(expand=True)
+        
+        for item in hashesA:
+            self.listBoxAH.insert(END, item)
+
+        for item in hashesB:
+            self.listBoxBH.insert(END, item)
+
+        self.hashing_displayed = True
+
+    def display_process(self):
+        if self.method_index == 0:
+            self.display_naive_psi()
 
     def on_submit(self):
         method = self.method.get()
-        method_index = METHODS.index(method)
+        self.method_index = METHODS.index(method)
 
         self.listA = self.textboxA.get("1.0", "end-1c")
         self.listB = self.textboxB.get("1.0", "end-1c")
@@ -179,14 +231,14 @@ class GUI(Tk):
         processes = []
         for i in range(0, 2):
             if i == 0:
-                args = ("./demo.exe -r " + str(i) + " -p " + str(method_index) + " -f " + listA_path).split()
+                args = ("./demo.exe -r " + str(i) + " -p " + str(self.method_index) + " -f " + listA_path).split()
             else:
-                args = ("./demo.exe -r " + str(i) + " -p " + str(method_index) + " -f " + listB_path).split()
+                args = ("./demo.exe -r " + str(i) + " -p " + str(self.method_index) + " -f " + listB_path).split()
             popen = subprocess.Popen(args, stdout=subprocess.PIPE)
             processes.append(popen)
 
             # seems like there's a bug in dh-based, need to call again
-            if method_index == 1:
+            if self.method_index == 1:
                 args = ("./demo.exe -r 1 -p 1 -f sample_sets/input_A.txt").split()
                 popen = subprocess.Popen(args, stdout=subprocess.PIPE)
                 processes.append(popen)
@@ -197,12 +249,12 @@ class GUI(Tk):
             output = process.stdout.read()
             lists.append(output)
         
-        # self.display_submitted_lists(lists)
+        self.display_process()
         self.display_expected_intersections()
         self.display_actual_intersection()
 
 
-    def display_submitted_lists(self, lists):
+    def display_results(self):
         self.scrollbar = Scrollbar(self)
         self.scrollbar.pack(side=RIGHT, fill=Y)
 
