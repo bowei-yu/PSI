@@ -77,6 +77,9 @@ uint32_t naivepsi(role_type role, uint32_t neles, uint32_t pneles, task_ctx ectx
 
 	run_task(ntasks, ectx, psi_hashing_function);
 
+	ofstream filestream("output/hashing.out");
+	filestream << ectx.eles.output;
+
 	phashes = (uint8_t*) malloc(sizeof(uint8_t) * pneles * maskbytelen);
 
 

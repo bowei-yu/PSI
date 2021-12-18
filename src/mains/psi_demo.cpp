@@ -28,6 +28,7 @@ int32_t psi_demonstrator(int32_t argc, char** argv) {
 	psi_prot protocol;
 
 	mbfac=1024*1024;
+	ofstream filestream("output/result.out");
 
 	read_psi_demo_options(&argc, &argv, &role, &protocol, &filename, &address, &nelements, &detailed_timings);
 
@@ -94,8 +95,10 @@ int32_t psi_demonstrator(int32_t argc, char** argv) {
 				//cout << i << ": \t";
 				for(j = 0; j < res_bytelens[i]; j++) {
 					cout << intersection[i][j];
+					filestream << intersection[i][j];
 				}
 				cout << endl;
+				filestream << endl;
 			}
 		}
 
