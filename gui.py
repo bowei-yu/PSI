@@ -1,7 +1,8 @@
 from tkinter import *
 import subprocess
 
-METHODS = ["naive-hashing", "pk-based", "server-aided", "ot-based"]
+METHODS = ["naive-hashing", "server-aided", "pk-based", "ot-based"]
+pk_based_result_path = "output/pk-based/pk-based.out"
 
 class GUI(Tk):
     
@@ -15,10 +16,15 @@ class GUI(Tk):
         self.expected_displayed = False
         self.results_displayed = False
         self.hashing_displayed = False
+        self.keys_displayed = False
+        self.matches_displayed = False
 
         self.display_method_options()
         self.display_initial_lists()
         self.display_submit_button()
+
+        self.mainframe = Frame(self)
+        self.mainframe.pack(anchor=CENTER)
 
     def display_method_options(self):
         frame = Frame(self)
@@ -73,13 +79,13 @@ class GUI(Tk):
         A_array = self.listA.split("\n")
         B_array = self.listB.split("\n")
 
-        for line in A_array:
+        for line in B_array:
             if line == "":
                 continue
             else:
                 intersection_list[line] = 1
             
-        for line in B_array:
+        for line in A_array:
             if line == "":
                 continue
             else:
@@ -107,8 +113,8 @@ class GUI(Tk):
             self.calculated_intersection.configure(textvariable=calculated_intersection)
 
         else :
-            frame = Frame(self)
-            frame.pack(side=LEFT)
+            frame = Frame(self.mainframe)
+            frame.pack(side=LEFT, fill="both")
 
             num_intersections = len(intersections)
             self.calculated_intersection = Label(frame, textvariable=calculated_intersection)
@@ -116,7 +122,7 @@ class GUI(Tk):
 
             self.listBoxI = Listbox(frame)
             self.listBoxI.config(width=0)
-            self.listBoxI.pack(expand=True)
+            self.listBoxI.pack(expand=True, fill="both")
         
         for item in intersections:
             self.listBoxI.insert(END, item)
@@ -144,8 +150,8 @@ class GUI(Tk):
             self.actual_intersection.configure(textvariable=actual_intersection)
     
         else :
-            frame = Frame(self)
-            frame.pack(side=LEFT)
+            frame = Frame(self.mainframe)
+            frame.pack(side=LEFT, fill="both")
 
             num_intersections = len(intersections)
             self.actual_intersection = Label(frame, textvariable=actual_intersection)
@@ -153,7 +159,7 @@ class GUI(Tk):
 
             self.listBoxA = Listbox(frame)
             self.listBoxA.config(width=0)
-            self.listBoxA.pack(expand=True)
+            self.listBoxA.pack(expand=True, fill="both")
         
         for item in intersections:
             self.listBoxA.insert(END, item)
@@ -161,47 +167,99 @@ class GUI(Tk):
         self.results_displayed = True
 
     
-    def get_hashes(self):
+    def get_hashes_or_encrypted_keys(self, path):
         ABlines = []
-        with open("output/naive-psi.out") as f:
+        with open(path) as f:
             all_lines = f.read().split("SEPARATION")
-            print(len(all_lines))
             for sep_lines in all_lines:
                 lines = sep_lines.split("\n")
                 non_empty_lines = [line for line in lines if line.strip() != ""]
                 ABlines.append(non_empty_lines)
-        return ABlines
 
-    def display_naive_psi(self):
-        ABlines = self.get_hashes()
-        hashesA = ABlines[0]
-        hashesB = ABlines[1]
+        keys = []
+        if (path == pk_based_result_path):
+            with open("output/pk-based/pk-based_keyA.out") as f:
+                keyA = f.read()
+                keys.append(keyA)
+            with open("output/pk-based/pk-based_keyB.out") as f:
+                keyB = f.read()
+                keys.append(keyB)
+        return ABlines, keys
+
+
+    def get_matches_wrt_sender(self, path):
+        A_lines = []
+        B_lines = []
+        with open(path + "/A.out") as f:
+            lines = f.read().split("\n")
+            A_lines = [line for line in lines if line.strip() != ""]
+            A_lines.sort()
+        with open(path + "/B.out") as f:
+            lines = f.read().split("\n")
+            B_lines = [line for line in lines if line.strip() != ""]
+            B_lines.sort()
+        return A_lines, B_lines
+
+    def display_hashes_or_encrypted_keys(self, path, keyphrase):
+        ABhashes, keys = self.get_hashes_or_encrypted_keys(path)
+        hashesA = ABhashes[0]
+        hashesB = ABhashes[1]
+
+        # if (path == pk_based_result_path):
+            
+        if (self.keys_displayed):
+            self.listBoxKA.delete(0, END)
+            self.listBoxKB.delete(0, END)
+
+        else:
+            frameK = Frame(self.mainframe)
+            frameK.pack(side=LEFT, fill="both")
+
+            self.keyA = Label(frameK, text="Alice's Key")
+            self.keyA.pack()
+
+            self.listBoxKA = Listbox(frameK)
+            self.listBoxKA.config(width=0)
+            self.listBoxKA.pack(expand=True)
+
+            self.keyB = Label(frameK, text="Bob's Key")
+            self.keyB.pack()
+
+            self.listBoxKB = Listbox(frameK)
+            self.listBoxKB.config(width=0)
+            self.listBoxKB.pack(expand=True)
+
+            self.keys_displayed = True
+
+        if (len(keys) > 0):
+            self.listBoxKA.insert(END, keys[0])
+            self.listBoxKB.insert(END, keys[1])
 
         if self.hashing_displayed:
             self.listBoxAH.delete(0, END)
             self.listBoxBH.delete(0, END)
         
-        else :
-            frameA = Frame(self)
-            frameA.pack(side=LEFT)
+        else:
+            frameA = Frame(self.mainframe)
+            frameA.pack(side=LEFT, fill="both")
 
-            frameB = Frame(self)
-            frameB.pack(side=LEFT)
+            frameB = Frame(self.mainframe)
+            frameB.pack(side=LEFT, fill="both")
 
-            self.hashesA = Label(frameA, text="Alice's hashes")
+            self.hashesA = Label(frameA, text="Alice's " + keyphrase)
             self.hashesA.pack()
 
             self.listBoxAH = Listbox(frameA)
             self.listBoxAH.config(width=0)
-            self.listBoxAH.pack(expand=True)
+            self.listBoxAH.pack(expand=True, fill="both")
 
-            self.hashesB = Label(frameB, text="Bob's hashes")
+            self.hashesB = Label(frameB, text="Bob's " + keyphrase)
             self.hashesB.pack()
 
             self.listBoxBH = Listbox(frameB)
             self.listBoxBH.config(width=0)
-            self.listBoxBH.pack(expand=True)
-        
+            self.listBoxBH.pack(expand=True, fill="both")
+
         for item in hashesA:
             self.listBoxAH.insert(END, item)
 
@@ -210,9 +268,98 @@ class GUI(Tk):
 
         self.hashing_displayed = True
 
+    # elif (path == "output/naive-psi/naive-psi.out"):
+    #     if self.hashing_displayed:
+    #         self.listBoxAH.delete(0, END)
+    #         self.listBoxBH.delete(0, END)
+        
+    #     else:
+    #         frameA = Frame(self.mainframe)
+    #         frameA.pack(side=LEFT, fill="both")
+
+    #         frameB = Frame(self.mainframe)
+    #         frameB.pack(side=LEFT, fill="both")
+
+    #         self.hashesA = Label(frameA, text="Alice's " + keyphrase)
+    #         self.hashesA.pack()
+
+    #         self.listBoxAH = Listbox(frameA)
+    #         self.listBoxAH.config(width=0)
+    #         self.listBoxAH.pack(expand=True, fill="both")
+
+    #         self.hashesB = Label(frameB, text="Bob's " + keyphrase)
+    #         self.hashesB.pack()
+
+    #         self.listBoxBH = Listbox(frameB)
+    #         self.listBoxBH.config(width=0)
+    #         self.listBoxBH.pack(expand=True, fill="both")
+
+    #     for item in hashesA:
+    #         self.listBoxAH.insert(END, item)
+
+    #     for item in hashesB:
+    #         self.listBoxBH.insert(END, item)
+
+    #     if (path == pk_based_result_path):
+    #         self.listBoxKA.insert(END, keys[0])
+    #         self.listBoxKB.insert(END, keys[1])
+    #         self.keys_displayed = True
+
+    #     self.hashing_displayed = True
+
+
+    def display_matches(self, path):
+        matchesA, matchesB = self.get_matches_wrt_sender(path)
+
+        if self.matches_displayed:
+            self.listBoxAM.delete(0, END)
+            self.listBoxBM.delete(0, END)
+
+        else:
+            frameC = Frame(self.mainframe)
+            frameC.pack(side=LEFT, fill="both")
+
+            frameD = Frame(self.mainframe)
+            frameD.pack(side=LEFT, fill="both")
+
+            self.matchesA = Label(frameC, text="Alice's match indexes")
+            self.matchesA.pack()
+
+            self.listBoxAM = Listbox(frameC)
+            self.listBoxAM.config(width=0)
+            self.listBoxAM.pack(expand=True, fill="both")
+
+            self.matchesB = Label(frameD, text="Bob's match indexes")
+            self.matchesB.pack()
+
+            self.listBoxBM = Listbox(frameD)
+            self.listBoxBM.config(width=0)
+            self.listBoxBM.pack(expand=True, fill="both")
+
+        for item in matchesA:
+            self.listBoxAM.insert(END, item)
+
+        for item in matchesB:
+            self.listBoxBM.insert(END, item)
+
+        self.matches_displayed = True
+        
+
+    def display_naive_psi(self):
+        self.display_hashes_or_encrypted_keys("output/naive-psi/naive-psi.out", "hashes")
+        self.display_matches("output/naive-psi")
+
+    
+    def display_pk_based(self):
+        self.display_hashes_or_encrypted_keys(pk_based_result_path, "ciphertexts")
+        # self.display_matches("output/pk-based")
+
+
     def display_process(self):
         if self.method_index == 0:
             self.display_naive_psi()
+        elif self.method_index == 2:
+            self.display_pk_based()
 
     def on_submit(self):
         method = self.method.get()
@@ -237,7 +384,7 @@ class GUI(Tk):
             popen = subprocess.Popen(args, stdout=subprocess.PIPE)
             processes.append(popen)
 
-            # seems like there's a bug in dh-based, need to call again
+            # for server-aided, need another server
             if self.method_index == 1:
                 args = ("./demo.exe -r 1 -p 1 -f sample_sets/input_A.txt").split()
                 popen = subprocess.Popen(args, stdout=subprocess.PIPE)

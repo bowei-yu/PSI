@@ -129,7 +129,7 @@ static void *asym_encrypt(void* context) {
 	for(i = 0; i < electx.nelements; i++, inptr+=electx.fixedbytelen, outptr+=electx.outbytelen) {
 		if(((task_ctx*) context)->actx.sample) {
 			tmpfe->sample_fe_from_bytes(inptr, electx.fixedbytelen);
-			//cout << "Mapped " << ((uint32_t*) inptr)[0] << " to ";
+			cout << "Mapped " << ((uint32_t*) inptr)[0] << " to ";
 		} else {
 			tmpfe->import_from_bytes(inptr);
 		}

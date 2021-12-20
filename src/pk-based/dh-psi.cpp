@@ -5,6 +5,7 @@
  *      Author: mzohner
  */
 #include "dh-psi.h"
+string pk_based_folderpath = "output/pk-based/";
 
 uint32_t dhpsi(role_type role, uint32_t neles, uint32_t pneles, uint32_t* elebytelens, uint8_t** elements,
 		uint8_t*** result, uint32_t** resbytelens, crypto* crypt_env, CSocket* sock, uint32_t ntasks,
@@ -44,6 +45,8 @@ uint32_t dhpsi(role_type role, uint32_t neles, uint32_t pneles, uint32_t elebyte
 
 uint32_t dhpsi(role_type role, uint32_t neles, uint32_t pneles, task_ctx ectx, crypto* crypt_env, CSocket* sock,
 		uint32_t ntasks, uint32_t* matches, bool cardinality, field_type ftype) {
+
+	ofstream filestream(pk_based_folderpath + "pk-based.out");
 
 	uint32_t i, hash_bytes = crypt_env->get_hash_bytes(), intersect_size, fe_bytes, sndbufsize, rcvbufsize;
 	//task_ctx ectx;
@@ -112,6 +115,35 @@ uint32_t dhpsi(role_type role, uint32_t neles, uint32_t pneles, task_ctx ectx, c
 	ectx.eles.hasvarbytelen = false;
 	ectx.actx.exponent = exponent;
 	ectx.actx.sample = false;
+
+	// cout << "Encryption and hash of my elements: " << endl;
+	if (role == SERVER) {
+		for(i = 0; i < neles; i++) {
+			for(uint32_t j = 0; j < fe_bytes; j++) {
+				filestream << (hex) << (uint32_t) encrypted_eles[i * fe_bytes + j] << (dec);
+			}
+			filestream << endl;
+		}
+
+		filestream << "SEPARATION";
+
+		// cout << "Encryption and hash of partner elements: " << endl;
+		for(i = 0; i < pneles; i++) {
+			for(uint32_t j = 0; j < fe_bytes; j++) {
+				filestream << (hex) << (uint32_t) peles[i * fe_bytes + j] << (dec);
+			}
+			filestream << endl;
+		}
+	}
+
+	
+	if (role == SERVER) {
+		ofstream keystream(pk_based_folderpath + "pk-based_keyA.out");
+		keystream << exponent;
+	} else {
+		ofstream keystream(pk_based_folderpath + "pk-based_keyB.out");
+		keystream << exponent;
+	}
 
 #ifdef DEBUG
 	cout << "Encrypting partners elements" << endl;

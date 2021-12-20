@@ -5,6 +5,7 @@
  *      Author: mzohner
  */
 #include "naive-psi.h"
+string naive_psi_folderpath = "output/naive-psi/";
 
 //routine for 2dimensional array with variable bit-length elements
 uint32_t naivepsi(role_type role, uint32_t neles, uint32_t pneles, uint32_t* elebytelens, uint8_t** elements,
@@ -77,7 +78,7 @@ uint32_t naivepsi(role_type role, uint32_t neles, uint32_t pneles, task_ctx ectx
 
 	run_task(ntasks, ectx, psi_hashing_function);
 
-	ofstream filestream("output/naive-psi.out");
+	ofstream filestream(naive_psi_folderpath + "naive-psi.out");
 
 	phashes = (uint8_t*) malloc(sizeof(uint8_t) * pneles * maskbytelen);
 
@@ -88,21 +89,23 @@ uint32_t naivepsi(role_type role, uint32_t neles, uint32_t pneles, task_ctx ectx
 	snd_and_rcv(hashes, neles * maskbytelen, phashes, pneles * maskbytelen, tmpsock);
 
 	// cout << "Hashes of my elements: " << endl;
-	for(i = 0; i < neles; i++) {
-		for(uint32_t j = 0; j < maskbytelen; j++) {
-			filestream << (hex) << (uint32_t) hashes[i * maskbytelen + j] << (dec);
+	if (role == SERVER) {
+		for(i = 0; i < neles; i++) {
+			for(uint32_t j = 0; j < maskbytelen; j++) {
+				filestream << (hex) << (uint32_t) hashes[i * maskbytelen + j] << (dec);
+			}
+			filestream << endl;
 		}
-		filestream << endl;
-	}
 
-	filestream << "SEPARATION";
+		filestream << "SEPARATION";
 
-	// cout << "Hashes of partner elements: " << endl;
-	for(i = 0; i < pneles; i++) {
-		for(uint32_t j = 0; j < maskbytelen; j++) {
-			filestream << (hex) << (uint32_t) phashes[i * maskbytelen + j] << (dec);
+		// cout << "Hashes of partner elements: " << endl;
+		for(i = 0; i < pneles; i++) {
+			for(uint32_t j = 0; j < maskbytelen; j++) {
+				filestream << (hex) << (uint32_t) phashes[i * maskbytelen + j] << (dec);
+			}
+			filestream << endl;
 		}
-		filestream << endl;
 	}
 
 #ifdef DEBUG
@@ -110,6 +113,20 @@ uint32_t naivepsi(role_type role, uint32_t neles, uint32_t pneles, task_ctx ectx
 #endif
 	intersect_size = find_intersection(hashes, neles, phashes, pneles, maskbytelen,
 			perm, matches);
+	if (role == SERVER) {
+		ofstream filestreamA(naive_psi_folderpath + "A.out");
+		for (int i = 0; i < intersect_size; i++) {
+			filestreamA << matches[i] << endl;
+		}
+		filestreamA.close();
+		
+	} else {
+		ofstream filestreamB(naive_psi_folderpath + "B.out");
+		for (int i = 0; i < intersect_size; i++) {
+			filestreamB << matches[i] << endl;
+		}
+		filestreamB.close();
+	}
 
 
 #ifdef DEBUG
